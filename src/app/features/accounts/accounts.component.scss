@@ -1,0 +1,436 @@
+.page-header {
+  margin-bottom: 32px;
+  h2 { margin-bottom: 6px; font-size: 1.6rem; }
+  p  { color: var(--gray-500); font-size: 0.9rem; }
+}
+
+.mb-20 { margin-bottom: 20px; }
+
+/* ─── Platform selection grid ─── */
+.platforms-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.platform-card {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0;
+  padding: 16px 18px;
+  background: white;
+  border: 1.5px solid var(--gray-200);
+  border-radius: 12px;
+  cursor: default;
+  transition: all 0.15s ease;
+  position: relative;
+  user-select: none;
+
+  &:hover {
+    border-color: var(--gray-400);
+    box-shadow: var(--shadow-md);
+    transform: translateY(-1px);
+  }
+
+  &.has-accounts {
+    border-color: #A7F3D0;
+    background: #F0FDF4;
+    gap: 10px;
+  }
+}
+
+.platform-icon-wrap {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.platform-circle {
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 1.15rem;
+}
+
+.connected-badge-dot {
+  position: absolute;
+  bottom: -2px;
+  right: -2px;
+  width: 18px;
+  height: 18px;
+  background: var(--success);
+  border: 2px solid white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 0.6rem;
+}
+
+.platform-card-body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.platform-card-name {
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: var(--gray-900);
+}
+
+.platform-card-sub {
+  font-size: 0.78rem;
+  color: var(--gray-500);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.card-spinner {
+  color: var(--gray-400);
+  font-size: 1rem;
+  flex-shrink: 0;
+}
+
+.card-add-icon {
+  color: var(--gray-300);
+  font-size: 1.1rem;
+  flex-shrink: 0;
+  transition: color 0.15s;
+
+  .platform-card:hover & {
+    color: var(--primary);
+  }
+}
+
+.disconnect-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--gray-300);
+  font-size: 0.75rem;
+  padding: 4px 6px;
+  border-radius: 6px;
+  flex-shrink: 0;
+  transition: all 0.15s;
+
+  &:hover { color: var(--danger); background: var(--danger-light); }
+  &:disabled { opacity: 0.5; cursor: not-allowed; }
+}
+
+/* ─── Card top row ─── */
+.card-top {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+}
+
+.platform-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.platform-name {
+  font-weight: 600;
+  font-size: 0.875rem;
+  color: var(--gray-900);
+}
+
+.platform-sub {
+  font-size: 0.75rem;
+  color: var(--gray-500);
+}
+
+.connect-btn {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  padding: 6px 12px;
+  background: var(--primary);
+  color: white;
+  border: none;
+  border-radius: var(--radius-md);
+  font-size: 0.8rem;
+  font-weight: 500;
+  font-family: inherit;
+  cursor: pointer;
+  transition: all 0.15s;
+  min-width: 36px;
+  height: 34px;
+
+  &:hover:not(:disabled) { background: var(--primary-dark); }
+  &:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  &.connecting { background: var(--gray-300); color: var(--gray-600); }
+
+  .has-accounts & {
+    background: var(--gray-100);
+    color: var(--gray-600);
+    &:hover:not(:disabled) { background: var(--gray-200); }
+  }
+}
+
+.connect-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  white-space: nowrap;
+}
+
+/* ─── Account chips ─── */
+.accounts-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding-top: 10px;
+  border-top: 1px solid var(--gray-100);
+  width: 100%;
+}
+
+.account-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: var(--success-light);
+  border: 1px solid #A7F3D0;
+  border-radius: 100px;
+  padding: 3px 8px 3px 6px;
+  font-size: 0.75rem;
+  color: #065F46;
+}
+
+.chip-check {
+  color: var(--success);
+  font-size: 0.7rem;
+  flex-shrink: 0;
+}
+
+.chip-handle {
+  max-width: 120px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: 500;
+}
+
+.chip-remove {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #6EE7B7;
+  padding: 1px 2px;
+  margin-left: 2px;
+  border-radius: 50%;
+  font-size: 0.65rem;
+  line-height: 1;
+  transition: all 0.12s;
+
+  &:hover:not(:disabled) { color: var(--danger); background: var(--danger-light); }
+  &:disabled { opacity: 0.5; cursor: not-allowed; }
+}
+
+/* ─── Advanced / manual section ─── */
+.advanced-section {
+  margin-bottom: 32px;
+}
+
+.advanced-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  background: none;
+  border: none;
+  font-size: 0.8rem;
+  color: var(--gray-400);
+  cursor: pointer;
+  font-family: inherit;
+  padding: 6px 0;
+  transition: color 0.15s;
+
+  &:hover { color: var(--gray-600); }
+}
+
+.manual-card {
+  margin-top: 16px;
+}
+
+.manual-card-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--gray-600);
+  margin-bottom: 20px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--gray-100);
+}
+
+.platform-radio-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+}
+
+.radio-card {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border: 1.5px solid var(--gray-200);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: var(--gray-700);
+  transition: all 0.15s;
+  user-select: none;
+
+  &:hover   { border-color: var(--gray-300); background: var(--gray-50); }
+  &.selected { border-color: var(--primary); background: var(--primary-light); color: var(--primary-dark); }
+}
+
+.radio-circle {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 0.85rem;
+  flex-shrink: 0;
+}
+
+.label-hint {
+  color: var(--gray-400);
+  font-weight: 400;
+  font-size: 0.8rem;
+}
+
+.hint-box {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  background: var(--primary-light);
+  border: 1px solid #BFDBFE;
+  border-radius: var(--radius-md);
+  padding: 10px 12px;
+  font-size: 0.8rem;
+  color: var(--gray-600);
+  margin-bottom: 16px;
+  line-height: 1.5;
+
+  i { flex-shrink: 0; margin-top: 2px; color: var(--primary); }
+}
+
+/* ─── Connected accounts list ─── */
+.connected-section {
+  border-top: 1px solid var(--gray-100);
+  padding-top: 24px;
+}
+
+.section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+
+  h4 { font-size: 0.9rem; color: var(--gray-700); font-weight: 600; }
+}
+
+.accounts-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.account-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  border: 1px solid var(--gray-200);
+  border-radius: var(--radius-md);
+  transition: background 0.12s;
+
+  &:hover { background: var(--gray-50); }
+}
+
+.account-row-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.account-row-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 0.95rem;
+  flex-shrink: 0;
+}
+
+.account-row-info {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.account-row-name   { font-weight: 600; font-size: 0.875rem; color: var(--gray-900); }
+.account-row-handle { font-size: 0.78rem; color: var(--gray-500); }
+
+.account-row-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.btn-ghost-danger {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border: 1px solid #FECACA;
+  border-radius: var(--radius-md);
+  background: white;
+  color: var(--danger);
+  font-size: 0.78rem;
+  font-weight: 500;
+  font-family: inherit;
+  cursor: pointer;
+  transition: all 0.15s;
+
+  &:hover:not(:disabled) { background: var(--danger-light); }
+  &:disabled { opacity: 0.5; cursor: not-allowed; }
+}
+
+@keyframes spin { to { transform: rotate(360deg); } }
+.spin { display: inline-block; animation: spin 0.7s linear infinite; }
+
+@media (max-width: 640px) {
+  .platforms-grid     { grid-template-columns: 1fr; }
+  .platform-radio-grid { grid-template-columns: 1fr; }
+}

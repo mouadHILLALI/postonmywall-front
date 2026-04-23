@@ -1,0 +1,140 @@
+<div class="page-header">
+  <div class="page-header-text">
+    <h2>Dashboard</h2>
+    <p>Overview of your publish activity</p>
+  </div>
+  <button class="btn btn-secondary btn-sm" (click)="loadLogs()">
+    <i class="bi bi-arrow-clockwise"></i> Refresh
+  </button>
+</div>
+
+<div class="stats-grid">
+  <div class="stat-card total">
+    <div class="stat-icon"><i class="bi bi-send"></i></div>
+    <div class="stat-body">
+      <span class="stat-value">{{ logs().length }}</span>
+      <span class="stat-label">Total Posts</span>
+    </div>
+  </div>
+  <div class="stat-card published">
+    <div class="stat-icon"><i class="bi bi-check-circle-fill"></i></div>
+    <div class="stat-body">
+      <span class="stat-value">{{ countByStatus('PUBLISHED') }}</span>
+      <span class="stat-label">Published</span>
+    </div>
+  </div>
+  <div class="stat-card failed">
+    <div class="stat-icon"><i class="bi bi-x-circle-fill"></i></div>
+    <div class="stat-body">
+      <span class="stat-value">{{ countByStatus('FAILED') }}</span>
+      <span class="stat-label">Failed</span>
+    </div>
+  </div>
+  <div class="stat-card removed">
+    <div class="stat-icon"><i class="bi bi-trash3"></i></div>
+    <div class="stat-body">
+      <span class="stat-value">{{ countByStatus('REMOVED') }}</span>
+      <span class="stat-label">Removed</span>
+    </div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-header">
+    <h3>Publish History</h3>
+    <div class="header-actions">
+      <select
+        class="form-control filter-select"
+        [ngModel]="filterStatus()"
+        (ngModelChange)="setFilter($event)"
+      >
+        <option value="">All Status</option>
+        <option value="PUBLISHED">Published</option>
+        <option value="FAILED">Failed</option>
+        <option value="REMOVED">Removed</option>
+        <option value="PENDING">Pending</option>
+      </select>
+    </div>
+  </div>
+
+  @if (loading()) {
+    <div class="loading-state">
+      <i class="bi bi-arrow-clockwise spin" style="font-size:1.5rem;color:var(--gray-400)"></i>
+      <p>Loading logs…</p>
+    </div>
+  } @else if (filtered().length === 0) {
+    <div class="empty-state">
+      <i class="bi bi-inbox" style="font-size:2.5rem;color:var(--gray-300);display:block;margin-bottom:12px"></i>
+      <h4>No publish logs yet</h4>
+      <p>Head over to Publish to post your first content</p>
+    </div>
+  } @else {
+    <div class="table-wrapper">
+      <table>
+        <thead>
+          <tr>
+            <th>Platform</th>
+            <th>Title</th>
+            <th>Status</th>
+            <th>Published At</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (log of filtered(); track log.id) {
+            <tr>
+              <td>
+                <span class="platform-badge {{ log.platform }}">
+                  <i [class]="'bi ' + getPlatformIconClass(log.platform)"></i>
+                  {{ log.platform }}
+                </span>
+              </td>
+              <td>
+                <span class="log-title">{{ log.title || 'No title' }}</span>
+                @if (log.errorMessage) {
+                  <span class="log-error">{{ log.errorMessage | slice:0:60 }}…</span>
+                }
+              </td>
+              <td>
+                <span [class]="'badge ' + getStatusBadge(log.status)">{{ log.status }}</span>
+              </td>
+              <td class="date-cell">
+                {{ log.publishedAt ? (log.publishedAt | date:'MMM d, y HH:mm') : '—' }}
+              </td>
+              <td>
+                @if (log.status === 'PUBLISHED') {
+                  <button
+                    class="btn btn-danger btn-sm"
+                    (click)="removePost(log)"
+                    [disabled]="removingId() === log.id"
+                  >
+                    @if (removingId() === log.id) {
+                      <i class="bi bi-arrow-clockwise spin"></i>
+                    } @else {
+                      <i class="bi bi-trash3"></i>
+                    }
+                    Remove
+                  </button>
+                } @else {
+                  <span class="no-action">—</span>
+                }
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+
+    @if (totalPages() > 1) {
+      <div class="pagination">
+        <button class="btn btn-secondary btn-sm" (click)="prevPage()" [disabled]="currentPage() === 0">
+          <i class="bi bi-chevron-left"></i> Prev
+        </button>
+        <span class="page-info">Page {{ currentPage() + 1 }} of {{ totalPages() }}</span>
+        <button class="btn btn-secondary btn-sm" (click)="nextPage()" [disabled]="currentPage() >= totalPages() - 1">
+          Next <i class="bi bi-chevron-right"></i>
+        </button>
+      </div>
+    }
+  }
+</div>

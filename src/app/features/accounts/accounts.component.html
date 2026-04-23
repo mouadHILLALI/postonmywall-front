@@ -1,0 +1,143 @@
+<div class="page-header">
+  <h2>Where do you want to publish?</h2>
+  <p>Connect your social media accounts to start sharing content</p>
+</div>
+
+@if (error()) {
+  <div class="alert alert-error mb-20">
+    <i class="bi bi-exclamation-circle-fill"></i> {{ error() }}
+  </div>
+}
+@if (success()) {
+  <div class="alert alert-success mb-20">
+    <i class="bi bi-check-circle-fill"></i> Account linked successfully!
+  </div>
+}
+
+<!-- Platform grid -->
+<div class="platforms-grid">
+  @for (p of platforms; track p.value) {
+    @let linked = getAccountsForPlatform(p.value);
+    <div class="platform-card" [class.has-accounts]="linked.length > 0">
+
+      <!-- Card header: icon + name + connect button -->
+      <div class="card-top">
+        <div class="platform-icon-wrap">
+          <div class="platform-circle" [style.background]="p.circleColor">
+            <i [class]="'bi ' + p.iconClass"></i>
+          </div>
+        </div>
+
+        <div class="platform-info">
+          <span class="platform-name">{{ p.label }}</span>
+          <span class="platform-sub">{{ p.subtitle }}</span>
+        </div>
+
+        <button
+          class="connect-btn"
+          [class.connecting]="oauthLoadingPlatform() === p.value"
+          (click)="connectOAuth(p.value)"
+          [disabled]="oauthLoadingPlatform() !== null"
+          [title]="linked.length > 0 ? 'Add another ' + p.label + ' account' : 'Connect ' + p.label"
+        >
+          @if (oauthLoadingPlatform() === p.value) {
+            <i class="bi bi-arrow-clockwise spin"></i>
+          } @else if (linked.length > 0) {
+            <i class="bi bi-plus-lg"></i>
+          } @else {
+            <span class="connect-label">
+              <i class="bi bi-plus-lg"></i> Connect
+            </span>
+          }
+        </button>
+      </div>
+
+      <!-- Connected accounts for this platform -->
+      @if (linked.length > 0) {
+        <div class="accounts-chips">
+          @for (account of linked; track account.id) {
+            <div class="account-chip">
+              <i class="bi bi-check-circle-fill chip-check"></i>
+              <span class="chip-handle">{{ account.accountId }}</span>
+              <button
+                class="chip-remove"
+                (click)="unlink(account)"
+                [disabled]="unlinkingId() === account.id"
+                title="Disconnect"
+              >
+                @if (unlinkingId() === account.id) {
+                  <i class="bi bi-arrow-clockwise spin"></i>
+                } @else {
+                  <i class="bi bi-x-lg"></i>
+                }
+              </button>
+            </div>
+          }
+        </div>
+      }
+
+    </div>
+  }
+</div>
+
+<!-- Manual / advanced toggle -->
+<div class="advanced-section">
+  <button class="advanced-toggle" (click)="showManualForm.set(!showManualForm())">
+    <i [class]="'bi ' + (showManualForm() ? 'bi-chevron-up' : 'bi-chevron-down')"></i>
+    {{ showManualForm() ? 'Hide manual setup' : 'Connect with manual tokens (advanced)' }}
+  </button>
+
+  @if (showManualForm()) {
+    <div class="card manual-card">
+      <div class="manual-card-header">
+        <i class="bi bi-key"></i> Manual token setup
+      </div>
+
+      <form [formGroup]="form" (ngSubmit)="onSubmit()">
+        <div class="form-group">
+          <label>Platform</label>
+          <div class="platform-radio-grid">
+            @for (p of platforms; track p.value) {
+              <label class="radio-card" [class.selected]="form.get('platform')?.value === p.value">
+                <input type="radio" formControlName="platform" [value]="p.value" hidden (change)="onPlatformChange(p.value)" />
+                <div class="radio-circle" [style.background]="p.circleColor">
+                  <i [class]="'bi ' + p.iconClass"></i>
+                </div>
+                <span>{{ p.label }}</span>
+              </label>
+            }
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Account ID / Handle</label>
+          <input class="form-control" formControlName="accountId" placeholder="e.g. @username" />
+        </div>
+
+        <div class="form-group">
+          <label>Access Token</label>
+          <input class="form-control" formControlName="accessToken" type="password" placeholder="OAuth access token" />
+        </div>
+
+        @if (showTokenSecret()) {
+          <div class="form-group">
+            <label>Token Secret <span class="label-hint">(Twitter only)</span></label>
+            <input class="form-control" formControlName="tokenSecret" type="password" placeholder="OAuth token secret" />
+          </div>
+        }
+
+        @if (form.get('platform')?.value) {
+          <div class="hint-box">
+            <i class="bi bi-info-circle"></i>
+            {{ getPlatformDef(form.get('platform')?.value).hint }}
+          </div>
+        }
+
+        <button class="btn btn-primary btn-full" type="submit" [disabled]="loading() || form.invalid">
+          @if (loading()) { <i class="bi bi-arrow-clockwise spin"></i> Linking… }
+          @else { <i class="bi bi-link-45deg"></i> Link Account }
+        </button>
+      </form>
+    </div>
+  }
+</div>

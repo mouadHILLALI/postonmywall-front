@@ -1,0 +1,243 @@
+<div class="page-header">
+  <div class="page-header-text">
+    <h2>Upload &amp; Publish</h2>
+    <p>Upload media to S3 then push it to any linked social platform</p>
+  </div>
+</div>
+
+<div class="publish-layout">
+  <!-- ── Left column: Upload + File list ── -->
+  <div class="left-col">
+
+    <!-- Upload card -->
+    <div class="card">
+      <div class="card-header">
+        <h3>Upload Media</h3>
+      </div>
+
+      @if (uploadError()) {
+        <div class="alert alert-error"><i class="bi bi-exclamation-circle-fill"></i> {{ uploadError() }}</div>
+      }
+      @if (uploadSuccess()) {
+        <div class="alert alert-success"><i class="bi bi-check-circle-fill"></i> File uploaded successfully!</div>
+      }
+
+      <div
+        class="drop-zone"
+        [class.has-file]="selectedFile()"
+        (click)="fileInput.click()"
+        (dragover)="onDragOver($event)"
+        (drop)="onDrop($event)"
+      >
+        <input #fileInput type="file" hidden (change)="onFileSelected($event)" accept="image/*,video/*,audio/*" />
+
+        @if (!selectedFile()) {
+          <div class="drop-content">
+            <i class="bi bi-cloud-upload drop-icon"></i>
+            <p class="drop-title">Drop your file here</p>
+            <p class="drop-sub">or click to browse</p>
+            <p class="drop-types">Images · Videos · Audio — up to 500 MB</p>
+          </div>
+        } @else {
+          <div class="file-preview-row">
+            @if (localPreviewUrl()) {
+              <img class="local-thumb" [src]="localPreviewUrl()!" alt="preview" />
+            } @else {
+              <i [class]="'bi ' + getFileIconClass(selectedFile()!.type) + ' file-icon-lg'"></i>
+            }
+            <div class="file-details">
+              <span class="file-name">{{ selectedFile()!.name }}</span>
+              <span class="file-size">{{ formatSize(selectedFile()!.size) }}</span>
+            </div>
+            <button class="remove-btn" (click)="removeLocalFile($event)">
+              <i class="bi bi-x-lg"></i>
+            </button>
+          </div>
+        }
+      </div>
+
+      @if (uploadProgress() !== null) {
+        <div class="progress-wrap">
+          <div class="progress-bar" [style.width.%]="uploadProgress()"></div>
+          <span class="progress-label">{{ uploadProgress() }}%</span>
+        </div>
+      }
+
+      <button
+        class="btn btn-primary btn-full upload-btn"
+        (click)="uploadFile()"
+        [disabled]="!selectedFile() || uploading()"
+      >
+        @if (uploading()) {
+          <i class="bi bi-arrow-clockwise spin"></i>
+          Uploading… {{ uploadProgress() }}%
+        } @else {
+          <i class="bi bi-cloud-upload"></i> Upload to S3
+        }
+      </button>
+    </div>
+
+    <!-- Files list -->
+    <div class="card">
+      <div class="card-header">
+        <h3>My Files</h3>
+        <button class="btn btn-secondary btn-sm" (click)="refreshFiles()">
+          <i class="bi bi-arrow-clockwise"></i>
+        </button>
+      </div>
+
+      @if (loadingFiles()) {
+        <div class="loading-state compact-loading">
+          <i class="bi bi-arrow-clockwise spin" style="font-size:1.5rem;color:var(--gray-400)"></i>
+        </div>
+      } @else if (files().length === 0) {
+        <div class="empty-state compact-empty">
+          <i class="bi bi-folder2-open" style="font-size:2rem;color:var(--gray-300);display:block;margin-bottom:8px"></i>
+          <p>No files uploaded yet</p>
+        </div>
+      } @else {
+        <div class="files-list">
+          @for (file of files(); track file.id) {
+            <div
+              class="file-item"
+              [class.selected]="selectedMediaFile()?.id === file.id"
+              (click)="selectMediaFile(file)"
+            >
+              <div class="file-thumb">
+                @if (file.mediaType === 'IMAGE' && file.presignedUrl) {
+                  <img [src]="file.presignedUrl" [alt]="file.originalName" class="thumb-img" />
+                } @else {
+                  <i [class]="'bi ' + getMediaIconClass(file.mediaType) + ' thumb-icon'"></i>
+                }
+              </div>
+              <div class="file-item-info">
+                <span class="file-item-name">{{ file.originalName }}</span>
+                <span class="file-item-meta">{{ formatSize(file.sizeBytes) }} · {{ file.mediaType }}</span>
+              </div>
+              <div class="file-item-actions">
+                @if (selectedMediaFile()?.id === file.id) {
+                  <span class="badge badge-primary check-badge"><i class="bi bi-check2"></i></span>
+                }
+                <button class="btn btn-danger btn-sm icon-btn" (click)="deleteFile($event, file)">
+                  <i class="bi bi-trash3"></i>
+                </button>
+              </div>
+            </div>
+          }
+        </div>
+      }
+    </div>
+  </div>
+
+  <!-- ── Right column: Preview + Publish ── -->
+  <div class="right-col">
+
+    <!-- Media preview panel -->
+    @if (selectedMediaFile()) {
+      <div class="card preview-card">
+        <div class="card-header">
+          <h3>Preview</h3>
+          <span class="badge badge-primary">{{ selectedMediaFile()!.mediaType }}</span>
+        </div>
+        <div class="media-preview-box">
+          @switch (selectedMediaFile()!.mediaType) {
+            @case ('IMAGE') {
+              <img [src]="selectedMediaFile()!.presignedUrl" [alt]="selectedMediaFile()!.originalName" class="preview-image" />
+            }
+            @case ('VIDEO') {
+              <video [src]="selectedMediaFile()!.presignedUrl" controls class="preview-video"></video>
+            }
+            @case ('AUDIO') {
+              <div class="audio-preview">
+                <i class="bi bi-music-note-beamed audio-icon-lg"></i>
+                <p class="audio-filename">{{ selectedMediaFile()!.originalName }}</p>
+                <audio [src]="selectedMediaFile()!.presignedUrl" controls class="audio-ctrl"></audio>
+              </div>
+            }
+          }
+        </div>
+        <div class="preview-footer">
+          <span class="preview-name">{{ selectedMediaFile()!.originalName }}</span>
+          <span class="preview-size">{{ formatSize(selectedMediaFile()!.sizeBytes) }}</span>
+        </div>
+      </div>
+    }
+
+    <!-- Publish form -->
+    <div class="card">
+      <div class="card-header">
+        <h3>Publish</h3>
+      </div>
+
+      @if (publishError()) {
+        <div class="alert alert-error"><i class="bi bi-exclamation-circle-fill"></i> {{ publishError() }}</div>
+      }
+      @if (publishResult()?.status === 'PUBLISHED') {
+        <div class="alert alert-success">
+          <i class="bi bi-check-circle-fill"></i> Published! Post is live on {{ publishResult()!.platform }}
+        </div>
+      }
+      @if (publishResult()?.status === 'FAILED') {
+        <div class="alert alert-error">
+          <i class="bi bi-x-circle-fill"></i> Failed: {{ publishResult()!.errorMessage }}
+        </div>
+      }
+
+      <form [formGroup]="publishForm" (ngSubmit)="onPublish()">
+        <div class="form-group">
+          <label>Selected File</label>
+          @if (selectedMediaFile()) {
+            <div class="selected-chip">
+              <i [class]="'bi ' + getMediaIconClass(selectedMediaFile()!.mediaType)"></i>
+              <span class="chip-name">{{ selectedMediaFile()!.originalName }}</span>
+              <button type="button" class="chip-remove" (click)="selectedMediaFile.set(null)">
+                <i class="bi bi-x-lg"></i>
+              </button>
+            </div>
+          } @else {
+            <p class="no-selection">
+              <i class="bi bi-arrow-left"></i> Select a file from the list on the left
+            </p>
+          }
+        </div>
+
+        <div class="form-group">
+          <label>Social Account</label>
+          <select class="form-control" formControlName="socialAccountId">
+            <option value="">Select account</option>
+            @for (acc of accounts(); track acc.id) {
+              <option [value]="acc.id">{{ acc.platform }} — {{ acc.accountId }}</option>
+            }
+          </select>
+          @if (accounts().length === 0) {
+            <a routerLink="/accounts" class="helper-link">
+              <i class="bi bi-plus-lg"></i> Link a social account first
+            </a>
+          }
+        </div>
+
+        <div class="form-group">
+          <label>Title / Caption</label>
+          <input class="form-control" formControlName="title" placeholder="What's this post about?" />
+        </div>
+
+        <div class="form-group">
+          <label>Description <span class="label-optional">(optional)</span></label>
+          <textarea class="form-control" formControlName="description" rows="3" placeholder="Add more details…"></textarea>
+        </div>
+
+        <button
+          class="btn btn-primary btn-full btn-lg"
+          type="submit"
+          [disabled]="publishing() || !selectedMediaFile() || publishForm.invalid"
+        >
+          @if (publishing()) {
+            <i class="bi bi-arrow-clockwise spin"></i> Publishing…
+          } @else {
+            <i class="bi bi-send-fill"></i> Publish Now
+          }
+        </button>
+      </form>
+    </div>
+  </div>
+</div>
