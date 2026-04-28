@@ -27,5 +27,6 @@ export const routes: Routes = [
       { path: '', redirectTo: 'dashboard', pathMatch: 'full' }
     ]
   },
+  { path: 'privacy', loadComponent: () => import('./features/privacy/privacy.component').then(m => m.PrivacyComponent) },
   { path: '**', redirectTo: 'dashboard' }
 ];
