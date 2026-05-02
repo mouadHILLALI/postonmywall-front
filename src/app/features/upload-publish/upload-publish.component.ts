@@ -5,7 +5,13 @@ import { HttpEventType } from '@angular/common/http';
 import { switchMap } from 'rxjs';
 import { FileService, PublishService } from '../../core/services/api.service';
 import { AppStateService } from '../../core/services/app-state.service';
-import { MediaFile, PublishLog } from '../../core/models/models';
+import { MediaFile, SocialAccount } from '../../core/models/models';
+
+interface AccountResult {
+  account: SocialAccount;
+  status: 'publishing' | 'success' | 'failed';
+  error?: string;
+}
 
 @Component({
   selector: 'app-upload-publish',
@@ -26,8 +32,9 @@ export class UploadPublishComponent implements OnInit {
   publishing = signal(false);
   uploadError = signal('');
   uploadSuccess = signal(false);
-  publishError = signal('');
-  publishResult = signal<PublishLog | null>(null);
+
+  selectedAccountIds = signal<Set<string>>(new Set());
+  publishResults = signal<AccountResult[]>([]);
 
   get files() { return this.state.files; }
   get loadingFiles() { return this.state.filesLoading; }
@@ -40,8 +47,7 @@ export class UploadPublishComponent implements OnInit {
     private state: AppStateService,
   ) {
     this.publishForm = this.fb.group({
-      socialAccountId: ['', Validators.required],
-      title: ['', Validators.required],
+      title:       ['', Validators.required],
       description: [''],
     });
   }
@@ -51,9 +57,15 @@ export class UploadPublishComponent implements OnInit {
     this.state.loadAccounts();
   }
 
-  refreshFiles() {
-    this.state.loadFiles(0, 20, true);
+  refreshFiles() { this.state.loadFiles(0, 20, true); }
+
+  toggleAccount(id: string) {
+    const s = new Set(this.selectedAccountIds());
+    s.has(id) ? s.delete(id) : s.add(id);
+    this.selectedAccountIds.set(s);
   }
+
+  isAccountSelected(id: string): boolean { return this.selectedAccountIds().has(id); }
 
   onFileSelected(event: Event) {
     const input = event.target as HTMLInputElement;
@@ -135,11 +147,7 @@ export class UploadPublishComponent implements OnInit {
   }
 
   selectMediaFile(file: MediaFile) {
-    if (this.selectedMediaFile()?.id === file.id) {
-      this.selectedMediaFile.set(null);
-      return;
-    }
-    // Fetch a fresh presigned URL from the server before showing the preview
+    if (this.selectedMediaFile()?.id === file.id) { this.selectedMediaFile.set(null); return; }
     this.fileService.getFile(file.id).subscribe({
       next: res => this.selectedMediaFile.set(res.success ? res.data : file),
       error: () => this.selectedMediaFile.set(file),
@@ -160,21 +168,53 @@ export class UploadPublishComponent implements OnInit {
 
   onPublish() {
     const mediaFile = this.selectedMediaFile();
-    if (!mediaFile || this.publishForm.invalid) return;
+    const accountIds = [...this.selectedAccountIds()];
+    if (!mediaFile || this.publishForm.invalid || accountIds.length === 0) return;
+
+    const { title, description } = this.publishForm.value;
+    const selectedAccounts = this.accounts().filter(a => accountIds.includes(a.id));
+
     this.publishing.set(true);
-    this.publishError.set('');
-    this.publishResult.set(null);
-    const { socialAccountId, title, description } = this.publishForm.value;
-    this.publishService.publish(mediaFile.id, socialAccountId, title, description).subscribe({
-      next: res => {
-        if (res.success) this.publishResult.set(res.data);
-        this.publishing.set(false);
-      },
-      error: (err: any) => {
-        this.publishError.set(err?.error?.message || 'Publish failed');
-        this.publishing.set(false);
-      },
+    this.publishResults.set(selectedAccounts.map(a => ({ account: a, status: 'publishing' })));
+
+    let completed = 0;
+
+    selectedAccounts.forEach(account => {
+      this.publishService.publish(mediaFile.id, account.id, title, description).subscribe({
+        next: res => {
+          completed++;
+          this.publishResults.update(results => results.map(r =>
+            r.account.id === account.id
+              ? { ...r, status: res.success ? 'success' : 'failed', error: res.message }
+              : r
+          ));
+          if (completed === selectedAccounts.length) this.publishing.set(false);
+        },
+        error: (err: any) => {
+          completed++;
+          this.publishResults.update(results => results.map(r =>
+            r.account.id === account.id
+              ? { ...r, status: 'failed', error: err?.error?.message || 'Publish failed' }
+              : r
+          ));
+          if (completed === selectedAccounts.length) this.publishing.set(false);
+        },
+      });
     });
+  }
+
+  get canPublish(): boolean {
+    return !this.publishing() && !!this.selectedMediaFile() && this.publishForm.valid && this.selectedAccountIds().size > 0;
+  }
+
+  platformIcon(platform: string): string {
+    switch (platform) {
+      case 'TWITTER':   return 'bi-twitter-x';
+      case 'YOUTUBE':   return 'bi-youtube';
+      case 'INSTAGRAM': return 'bi-instagram';
+      case 'TIKTOK':    return 'bi-tiktok';
+      default:          return 'bi-globe';
+    }
   }
 
   getFileIconClass(type: string): string {

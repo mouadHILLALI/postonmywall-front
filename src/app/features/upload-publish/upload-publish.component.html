@@ -169,17 +169,21 @@
         <h3>Publish</h3>
       </div>
 
-      @if (publishError()) {
-        <div class="alert alert-error"><i class="bi bi-exclamation-circle-fill"></i> {{ publishError() }}</div>
-      }
-      @if (publishResult()?.status === 'PUBLISHED') {
-        <div class="alert alert-success">
-          <i class="bi bi-check-circle-fill"></i> Published! Post is live on {{ publishResult()!.platform }}
-        </div>
-      }
-      @if (publishResult()?.status === 'FAILED') {
-        <div class="alert alert-error">
-          <i class="bi bi-x-circle-fill"></i> Failed: {{ publishResult()!.errorMessage }}
+      @if (publishResults().length > 0) {
+        <div class="publish-results">
+          @for (r of publishResults(); track r.account.id) {
+            <div class="result-row" [class.result-success]="r.status === 'success'" [class.result-failed]="r.status === 'failed'">
+              <i [class]="'bi ' + platformIcon(r.account.platform)"></i>
+              <span class="result-platform">{{ r.account.platform }}</span>
+              @if (r.status === 'publishing') {
+                <i class="bi bi-arrow-clockwise spin result-icon"></i>
+              } @else if (r.status === 'success') {
+                <i class="bi bi-check-circle-fill result-icon"></i>
+              } @else {
+                <i class="bi bi-x-circle-fill result-icon" [title]="r.error"></i>
+              }
+            </div>
+          }
         </div>
       }
 
@@ -202,17 +206,34 @@
         </div>
 
         <div class="form-group">
-          <label>Social Account</label>
-          <select class="form-control" formControlName="socialAccountId">
-            <option value="">Select account</option>
-            @for (acc of accounts(); track acc.id) {
-              <option [value]="acc.id">{{ acc.platform }} — {{ acc.accountId }}</option>
-            }
-          </select>
+          <label>Social Accounts <span class="label-optional">(select one or more)</span></label>
           @if (accounts().length === 0) {
             <a routerLink="/accounts" class="helper-link">
               <i class="bi bi-plus-lg"></i> Link a social account first
             </a>
+          } @else {
+            <div class="account-checklist">
+              @for (acc of accounts(); track acc.id) {
+                <div
+                  class="account-check-item"
+                  [class.checked]="isAccountSelected(acc.id)"
+                  (click)="toggleAccount(acc.id)"
+                >
+                  <div class="acc-check-icon">
+                    <i [class]="'bi ' + platformIcon(acc.platform)"></i>
+                  </div>
+                  <div class="acc-check-info">
+                    <span class="acc-check-platform">{{ acc.platform }}</span>
+                    <span class="acc-check-id">{{ acc.accountId }}</span>
+                  </div>
+                  <div class="acc-check-box">
+                    @if (isAccountSelected(acc.id)) {
+                      <i class="bi bi-check2"></i>
+                    }
+                  </div>
+                </div>
+              }
+            </div>
           }
         </div>
 
@@ -229,12 +250,13 @@
         <button
           class="btn btn-primary btn-full btn-lg"
           type="submit"
-          [disabled]="publishing() || !selectedMediaFile() || publishForm.invalid"
+          [disabled]="!canPublish"
         >
           @if (publishing()) {
             <i class="bi bi-arrow-clockwise spin"></i> Publishing…
           } @else {
-            <i class="bi bi-send-fill"></i> Publish Now
+            <i class="bi bi-send-fill"></i>
+            Publish to {{ selectedAccountIds().size || '' }} {{ selectedAccountIds().size === 1 ? 'account' : selectedAccountIds().size > 1 ? 'accounts' : '…' }}
           }
         </button>
       </form>
