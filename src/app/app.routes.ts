@@ -28,5 +28,6 @@ export const routes: Routes = [
     ]
   },
   { path: 'privacy', loadComponent: () => import('./features/privacy/privacy.component').then(m => m.PrivacyComponent) },
+  { path: 'terms',   loadComponent: () => import('./features/terms/terms.component').then(m => m.TermsComponent) },
   { path: '**', redirectTo: 'dashboard' }
 ];
